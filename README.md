@@ -1,2 +1,0 @@
-# ProjetCineCritique
-projet
