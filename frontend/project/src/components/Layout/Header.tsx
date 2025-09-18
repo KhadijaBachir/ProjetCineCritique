@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Film, User, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -8,6 +8,7 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +25,11 @@ export function Header() {
     } catch (error) {
       console.error('Error signing out:', error);
     }
+  };
+
+  // Fonction pour déterminer si un lien est actif
+  const isActiveLink = (path: string) => {
+    return location.pathname === path;
   };
 
   return (
@@ -62,29 +68,38 @@ export function Header() {
           <nav className="hidden md:flex items-center space-x-6">
             <Link 
               to="/top-rated" 
-              className="text-gray-300 hover:text-blue-400 transition-colors"
+              className="relative px-3 py-2 text-gray-300 hover:text-white transition-colors group"
             >
               Top Films
+              {isActiveLink('/top-rated') && (
+                <span className="absolute bottom-0 left-0 w-full h-1 bg-yellow-400 rounded-t"></span>
+              )}
             </Link>
             
             {user ? (
               <div className="flex items-center space-x-4">
                 <Link 
                   to="/my-reviews" 
-                  className="text-gray-300 hover:text-blue-400 transition-colors"
+                  className="relative px-3 py-2 text-gray-300 hover:text-white transition-colors group"
                 >
                   Mes Critiques
+                  {isActiveLink('/my-reviews') && (
+                    <span className="absolute bottom-0 left-0 w-full h-1 bg-yellow-400 rounded-t"></span>
+                  )}
                 </Link>
                 <Link 
                   to={`/profile/${user.user_metadata?.username || user.id}`}
-                  className="flex items-center space-x-2 text-gray-300 hover:text-blue-400 transition-colors"
+                  className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors relative px-3 py-2 group"
                 >
                   <User size={20} />
                   <span>{user.user_metadata?.username || 'Profil'}</span>
+                  {isActiveLink(`/profile/${user.user_metadata?.username || user.id}`) && (
+                    <span className="absolute bottom-0 left-0 w-full h-1 bg-yellow-400 rounded-t"></span>
+                  )}
                 </Link>
                 <button
                   onClick={handleSignOut}
-                  className="flex items-center space-x-2 text-gray-300 hover:text-red-400 transition-colors"
+                  className="flex items-center space-x-2 text-gray-300 hover:text-red-400 transition-colors px-3 py-2"
                 >
                   <LogOut size={20} />
                   <span>Déconnexion</span>
@@ -94,15 +109,21 @@ export function Header() {
               <div className="flex items-center space-x-4">
                 <Link 
                   to="/login" 
-                  className="text-gray-300 hover:text-blue-400 transition-colors"
+                  className="relative px-3 py-2 text-gray-300 hover:text-white transition-colors group"
                 >
                   Connexion
+                  {isActiveLink('/login') && (
+                    <span className="absolute bottom-0 left-0 w-full h-1 bg-yellow-400 rounded-t"></span>
+                  )}
                 </Link>
                 <Link 
                   to="/register" 
-                  className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg hover:bg-yellow-300 transition-colors font-medium"
+                  className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg hover:bg-yellow-300 transition-colors font-medium relative"
                 >
                   Inscription
+                  {isActiveLink('/register') && (
+                    <span className="absolute bottom-0 left-0 w-full h-1 bg-yellow-400 rounded-t"></span>
+                  )}
                 </Link>
               </div>
             )}
@@ -143,7 +164,11 @@ export function Header() {
             <nav className="space-y-4">
               <Link 
                 to="/top-rated" 
-                className="block text-gray-300 hover:text-blue-400 transition-colors"
+                className={`block py-2 px-3 rounded transition-colors ${
+                  isActiveLink('/top-rated') 
+                    ? 'bg-yellow-400 text-gray-900 font-medium' 
+                    : 'text-gray-300 hover:text-white'
+                }`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Top Films
@@ -153,14 +178,22 @@ export function Header() {
                 <>
                   <Link 
                     to="/my-reviews" 
-                    className="block text-gray-300 hover:text-blue-400 transition-colors"
+                    className={`block py-2 px-3 rounded transition-colors ${
+                      isActiveLink('/my-reviews') 
+                        ? 'bg-yellow-400 text-gray-900 font-medium' 
+                        : 'text-gray-300 hover:text-white'
+                    }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Mes Critiques
                   </Link>
                   <Link 
                     to={`/profile/${user.user_metadata?.username || user.id}`}
-                    className="block text-gray-300 hover:text-blue-400 transition-colors"
+                    className={`block py-2 px-3 rounded transition-colors ${
+                      isActiveLink(`/profile/${user.user_metadata?.username || user.id}`) 
+                        ? 'bg-yellow-400 text-gray-900 font-medium' 
+                        : 'text-gray-300 hover:text-white'
+                    }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Mon Profil
@@ -170,7 +203,7 @@ export function Header() {
                       handleSignOut();
                       setIsMenuOpen(false);
                     }}
-                    className="block text-gray-300 hover:text-red-400 transition-colors"
+                    className="block w-full text-left py-2 px-3 text-gray-300 hover:text-red-400 transition-colors"
                   >
                     Déconnexion
                   </button>
@@ -179,14 +212,22 @@ export function Header() {
                 <>
                   <Link 
                     to="/login" 
-                    className="block text-gray-300 hover:text-blue-400 transition-colors"
+                    className={`block py-2 px-3 rounded transition-colors ${
+                      isActiveLink('/login') 
+                        ? 'bg-yellow-400 text-gray-900 font-medium' 
+                        : 'text-gray-300 hover:text-white'
+                    }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Connexion
                   </Link>
                   <Link 
                     to="/register" 
-                    className="block bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg hover:bg-yellow-300 transition-colors font-medium text-center"
+                    className={`block py-2 px-3 rounded text-center transition-colors ${
+                      isActiveLink('/register') 
+                        ? 'bg-yellow-500 text-gray-900 font-medium' 
+                        : 'bg-yellow-400 text-gray-900 hover:bg-yellow-300 font-medium'
+                    }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Inscription
