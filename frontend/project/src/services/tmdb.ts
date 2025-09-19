@@ -1,7 +1,6 @@
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-const TMDB_API_KEY = 'your_tmdb_api_key_here'; // You'll need to get this from TMDb
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY;  
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
-
 export class TMDbService {
   private static async fetchFromTMDb(endpoint: string, params: Record<string, string> = {}) {
     const url = new URL(`${TMDB_BASE_URL}${endpoint}`);

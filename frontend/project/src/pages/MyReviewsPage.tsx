@@ -96,9 +96,12 @@ export function MyReviewsPage() {
         <div className="mb-8 text-center relative">
           {/* Image de film */}
           <img
-            src="https://upload.wikimedia.org/wikipedia/en/9/9a/Tenet_movie_poster.jpg"
-            alt="Film Tenet"
+            src="/images/my-reviews-banner.jpg" // ou tout autre image dans votre dossier public
+            alt="Cinéma"
             className="mx-auto w-48 h-auto rounded-lg mb-4 shadow-lg"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'; // Cache l'image si elle ne charge pas
+            }}
           />
 
           <div className="flex items-center space-x-3 mb-4 justify-center">
