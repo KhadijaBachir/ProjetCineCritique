@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Film, User, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,6 +9,12 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    console.log('User dans Header:', user);
+    console.log('Token dans localStorage:', localStorage.getItem('authToken'));
+    console.log('User dans localStorage:', localStorage.getItem('user'));
+  }, [user]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +37,8 @@ export function Header() {
   const isActiveLink = (path: string) => {
     return location.pathname === path;
   };
+
+  
 
   return (
     <header className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
@@ -88,12 +96,12 @@ export function Header() {
                   )}
                 </Link>
                 <Link 
-                  to={`/profile/${user.user_metadata?.username || user.id}`}
+                  to={`/profile/${user.pseudo  || user.id}`}
                   className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors relative px-3 py-2 group"
                 >
                   <User size={20} />
-                  <span>{user.user_metadata?.username || 'Profil'}</span>
-                  {isActiveLink(`/profile/${user.user_metadata?.username || user.id}`) && (
+                  <span>{user.pseudo  || 'Profil'}</span>
+                  {isActiveLink(`/profile/${user.pseudo  || user.id}`) && (
                     <span className="absolute bottom-0 left-0 w-full h-1 bg-yellow-400 rounded-t"></span>
                   )}
                 </Link>
@@ -188,9 +196,9 @@ export function Header() {
                     Mes Critiques
                   </Link>
                   <Link 
-                    to={`/profile/${user.user_metadata?.username || user.id}`}
+                    to={`/profile/${user.pseudo  || user.id}`}
                     className={`block py-2 px-3 rounded transition-colors ${
-                      isActiveLink(`/profile/${user.user_metadata?.username || user.id}`) 
+                      isActiveLink(`/profile/${user.pseudo  || user.id}`) 
                         ? 'bg-yellow-400 text-gray-900 font-medium' 
                         : 'text-gray-300 hover:text-white'
                     }`}

@@ -1,6 +1,7 @@
 // src/services/supabase.ts
 // Version mock sans Supabase
 
+
 export const authService = {
   async signUp(email: string, password: string, username: string) {
     const newUser = { id: Date.now().toString(), email, username };

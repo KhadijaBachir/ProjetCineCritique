@@ -13,9 +13,9 @@ interface FormErrors {
 }
 
 // Interface pour les erreurs Firebase
-interface FirebaseError extends Error {
-  code?: string;
-}
+// interface FirebaseError extends Error {
+//   code?: string;
+// }
 
 export function RegisterPage() {
   const { signUp } = useAuth();
@@ -106,40 +106,29 @@ export function RegisterPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
+  
+  if (!validateForm()) return;
+
+  setLoading(true);
+
+  try {
+    await signUp(formData.email, formData.password, formData.username);
+    navigate('/login');
+  } catch (err: any) {
+    // let errorMessage = 'Erreur lors de l\'inscription';
     
-    if (!validateForm()) return;
-
-    setLoading(true);
-
-    try {
-      await signUp(formData.email, formData.password, formData.username);
-      navigate('/');
-    } catch (error) {
-      console.error('Registration error:', error);
-      
-      const firebaseError = error as FirebaseError;
-      let errorMessage = 'Erreur lors de l\'inscription';
-      
-      if (firebaseError.code === 'auth/email-already-in-use') {
-        errorMessage = 'Cet email est déjà utilisé';
-        setErrors({ email: errorMessage });
-      } else if (firebaseError.code === 'auth/invalid-email') {
-        errorMessage = 'Format d\'email invalide';
-        setErrors({ email: errorMessage });
-      } else if (firebaseError.code === 'auth/weak-password') {
-        errorMessage = 'Le mot de passe est trop faible';
-        setErrors({ password: errorMessage });
-      } else if (firebaseError.message && firebaseError.message.includes('already registered')) {
-        errorMessage = 'Cet email est déjà utilisé';
-        setErrors({ email: errorMessage });
-      } else {
-        setErrors({ general: errorMessage });
-      }
-    } finally {
-      setLoading(false);
+    if (err.message.includes('email')) {
+      setErrors({ email: err.message });
+    } else if (err.message.includes('mot de passe')) {
+      setErrors({ password: err.message });
+    } else {
+      setErrors({ general: err.message });
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

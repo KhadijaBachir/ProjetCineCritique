@@ -38,12 +38,7 @@ export function LoginPage() {
       await signIn(formData.email, formData.password);
       navigate('/');
     } catch (err: any) {
-      console.error('Login error:', err);
-      setError(
-        err.message.includes('Invalid') 
-          ? 'Email ou mot de passe incorrect' 
-          : 'Erreur lors de la connexion'
-      );
+      setError(err.message || 'Erreur lors de la connexion');
     } finally {
       setLoading(false);
     }

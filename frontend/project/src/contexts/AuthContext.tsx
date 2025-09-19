@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { authService } from "../services/supabase"; // le mock que nous avons créé
+import { authService, User } from "../services/authService";
 
 interface AuthContextType {
-  user: any | null;
+  user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
+  updateProfile: (profileData: { pseudo?: string; bio?: string; photo?: string }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -24,41 +25,92 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Charger l'utilisateur depuis localStorage au démarrage
+  // Charger l'utilisateur au démarrage
   useEffect(() => {
-    const currentUser = authService.getCurrentUser();
-    if (currentUser) {
-      setUser(currentUser);
+    const token = localStorage.getItem('authToken');
+    const savedUser = localStorage.getItem('user');
+    
+    if (token && savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+        
+        // Vérifier si le token est toujours valide
+        authService.getProfile()
+          .then(userData => {
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+          })
+          .catch(() => {
+            // Token invalide, déconnecter l'utilisateur
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
+            setUser(null);
+          });
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+      }
     }
     setLoading(false);
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
-      const loggedInUser = await authService.signIn(email, password);
-      setUser(loggedInUser);
-    } catch (error) {
-      console.error(error);
-      throw error;
+      console.log('Début de signIn');
+      const { token, user } = await authService.login(email, password);
+      console.log('Reçu du serveur - Token:', token);
+      console.log('Reçu du serveur - User:', user);
+      
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      setUser(user);
+      
+      console.log('Storage après connexion - Token:', localStorage.getItem('authToken'));
+      console.log('Storage après connexion - User:', localStorage.getItem('user'));
+      
+    } catch (error: any) {
+      console.error('Erreur dans signIn:', error);
+      if (error.response?.data?.error?.message) {
+        throw new Error(error.response.data.error.message);
+      }
+      throw new Error('Erreur lors de la connexion');
     }
   };
-
   const signUp = async (email: string, password: string, username: string) => {
     try {
-      const newUser = await authService.signUp(email, password, username);
-      setUser(newUser);
-    } catch (error) {
-      console.error(error);
-      throw error;
+      const { token, user } = await authService.register({ email, password, pseudo: username });
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      setUser(user);
+    } catch (error: any) {
+      if (error.response?.data?.error?.message) {
+        throw new Error(error.response.data.error.message);
+      }
+      throw new Error('Erreur lors de l\'inscription');
     }
   };
 
   const signOut = async () => {
-    await authService.signOut();
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
     setUser(null);
+  };
+
+  const updateProfile = async (profileData: { pseudo?: string; bio?: string; photo?: string }) => {
+    try {
+      const updatedUser = await authService.updateProfile(profileData);
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    } catch (error: any) {
+      if (error.response?.data?.error?.message) {
+        throw new Error(error.response.data.error.message);
+      }
+      throw new Error('Erreur lors de la mise à jour du profil');
+    }
   };
 
   const value: AuthContextType = {
@@ -67,6 +119,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signIn,
     signUp,
     signOut,
+    updateProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
