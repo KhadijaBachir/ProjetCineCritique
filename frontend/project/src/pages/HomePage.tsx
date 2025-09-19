@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Film, Star, TrendingUp, Search, ArrowRight, Play, Heart } from 'lucide-react';
 import { Movie } from '../types';
-import { TMDbService } from '../services/tmdb';
+import { movieService } from '../services/movieService';
 import { MovieCard } from '../components/Movies/MovieCard';
 
 export function HomePage() {
@@ -16,27 +16,31 @@ export function HomePage() {
     const fetchMovies = async () => {
       try {
         setLoading(true);
+        setError(null);
         
-        // Utilisez getPopularMovies pour toutes les sections
-        const popularResponse = await TMDbService.getPopularMovies();
-        const popularResults = popularResponse.results;
+        console.log('Début du chargement des films...');
         
-        setPopularMovies(popularResults.slice(0, 8));
+        // Chargez les deux ensembles de films en parallèle pour de meilleures performances
+        const [popularResults, topRatedResults] = await Promise.all([
+          movieService.getPopularMovies(),
+          movieService.getTopRatedMovies()
+        ]);
         
-        // Pour le Top 10, triez par note
-        const topRated = [...popularResults]
-          .sort((a, b) => b.vote_average - a.vote_average)
-          .slice(0, 10);
-        setTopRatedMovies(topRated);
+        console.log('Films populaires:', popularResults.length);
+        console.log('Top rated films:', topRatedResults.length);
         
-        // Favoris des fans = films avec le plus de votes
-        const favorites = [...popularResults]
-          .sort((a, b) => b.vote_count - a.vote_count)
+        // Utilisez l'assertion de type
+        setPopularMovies((popularResults as Movie[]).slice(0, 8));
+        setTopRatedMovies((topRatedResults as Movie[]).slice(0, 10));
+
+        const favorites = ([...popularResults] as Movie[])
+          .sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0))
           .slice(0, 8);
         setFavoriteMovies(favorites);
 
       } catch (err) {
-        setError('Erreur lors du chargement des films');
+        const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+        setError(`Erreur lors du chargement des films: ${errorMessage}`);
         console.error('Error fetching movies:', err);
       } finally {
         setLoading(false);
@@ -51,9 +55,28 @@ export function HomePage() {
     window.open(`https://www.youtube.com/results?search_query=${searchQuery}`, '_blank');
   };
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-500 bg-opacity-10 border border-red-500 text-red-400 px-6 py-4 rounded-lg max-w-md mx-auto">
+            <h2 className="text-xl font-bold mb-2">Erreur de chargement</h2>
+            <p>{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 bg-yellow-400 text-gray-900 px-4 py-2 rounded-lg hover:bg-yellow-300 transition-colors"
+            >
+              Réessayer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Hero Section avec bande-annonce YouTube */}
+      {/* Hero Section avec bande-annonce YouTube - SECTION RÉTABLIE */}
       <section className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Video YouTube embed */}
         <div className="absolute inset-0 w-full h-full">
@@ -103,6 +126,7 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* Le reste de votre code reste inchangé */}
       {/* Popular Movies Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -134,10 +158,6 @@ export function HomePage() {
                   <div className="h-3 bg-gray-700 rounded w-2/3"></div>
                 </div>
               ))}
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-red-400 text-lg">{error}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -192,10 +212,6 @@ export function HomePage() {
                 </div>
               ))}
             </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-red-400 text-lg">{error}</p>
-            </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6">
               {topRatedMovies.map((movie, index) => (
@@ -247,10 +263,6 @@ export function HomePage() {
                   <div className="h-3 bg-gray-700 rounded w-2/3"></div>
                 </div>
               ))}
-            </div>
-          ) : error ? (
-            <div className="text-center py-12">
-              <p className="text-red-400 text-lg">{error}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
